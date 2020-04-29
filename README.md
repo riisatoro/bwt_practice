@@ -7,6 +7,7 @@ Run pipenv:
 $> pipenv shell
 
 Then, run spider:
+
 $> sd src
 $> scrapy crawl products
 
