@@ -3,20 +3,30 @@ import json
 
 from scrapy.selector import Selector
 
-
 class Products(scrapy.Spider):
     """docs"""
     name = "products"
     start_urls = [
-        'https://www.tesco.com/groceries/en-GB/shop/household/kitchen-roll-and-tissues/all'
+        #'https://www.tesco.com/groceries/en-GB/shop/household/kitchen-roll-and-tissues/all?page=1',
+        'https://www.tesco.com/groceries/en-GB/shop/pets/cat-food-and-accessories/all?page=1'
     ]
 
     def parse(self, response):
-        #!empty
+        if response.status == 404:
+            print(response.request.url)
+            return
+
         products = response.xpath('//div[@class="product-details--content"]/h3/a/@href').getall()
         #print("[PRODUCTS]: ", products)
         for url in products:
             yield scrapy.Request(url="https://www.tesco.com"+url, callback=self.split_data)
+
+        url = response.request.url
+        splited_url = url.split("=")
+        splited_url[-1] = str(int(splited_url[-1])+1)
+        new_url = "=".join(splited_url)
+
+        yield scrapy.Request(url=new_url, callback=self.parse)
 
     def split_data(self, response):
         #dict with all xpath list to simplify editing
@@ -63,6 +73,26 @@ class Products(scrapy.Spider):
             print("[EXCEPTION]: ", e)
 
         yield self.save_data(product)
+
+    '''
+    def get_review(self, response):
+        #get all pages
+        pages = 1
+        try:
+            amount = int(response.xpath('//h2[@class="reviews-list__header"]/text()').get().split(" ")[0])
+            if amount>10:
+                pages = amount//10
+                if amount%10!=0:
+                    pages += 1
+                else:
+                    pass
+        except Exception as e:
+            print("[EXCEPTION]: ", e)
+
+        url = response.request.url+"?active-tab=product-reviews&page={0}#review-data".format(pages)
+
+        yield scrapy.Request(url=)
+    '''
 
     def split_review(self, response):
         review_data = '//article[@class="review"]'
