@@ -63,6 +63,7 @@ class Products(scrapy.Spider):
             product[key] = ' '.join(response.xpath(mul_data[key]).getall())
 
         try:
+            
             product["review"] = self.split_review(response)
         except Exception as e:
             print("[EXCEPTION]: ", e)
@@ -74,7 +75,6 @@ class Products(scrapy.Spider):
 
         yield self.save_data(product)
 
-    '''
     def get_review(self, response):
         #get all pages
         pages = 1
@@ -90,11 +90,10 @@ class Products(scrapy.Spider):
             print("[EXCEPTION]: ", e)
 
         url = response.request.url+"?active-tab=product-reviews&page={0}#review-data".format(pages)
-
-        yield scrapy.Request(url=)
-    '''
+        return url
 
     def split_review(self, response):
+
         review_data = '//article[@class="review"]'
         
         review_css = {
