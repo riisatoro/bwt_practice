@@ -38,12 +38,6 @@ class Products(scrapy.Spider):
 
         rev_data = '//p[@class="reviews-list__show-more"]/a/@href'
 
-        bought_next_data = {
-            "URL": '',
-            "title": '',
-            "image": '',
-            "price": '',
-        }
 
         product = {}
         review = {}
@@ -60,6 +54,11 @@ class Products(scrapy.Spider):
 
         try:
             product["review"] = self.split_review(response)
+        except Exception as e:
+            print("[EXCEPTION]: ", e)
+
+        try:
+            product["bought_next"] = self.split_bought(response)
         except Exception as e:
             print("[EXCEPTION]: ", e)
 
@@ -85,6 +84,27 @@ class Products(scrapy.Spider):
                 tmp[key] = rev.css(review_css[key]).get()
                 if key == "stars":
                     tmp[key] = int(tmp[key][0])
+            result.append(tmp)
+
+        return result
+
+    def split_bought(self, response):
+        result = []
+        bought_css = {
+            "URL": 'a.jfbLom::attr(href)',
+            "title": 'a.jfbLom::text',
+            "image": 'img.product-image::attr(src)',
+            "price": 'span.value::text',
+        }
+        
+        bought_next = response.xpath('//div[@class="product-tile-wrapper"]')
+        for product in bought_next:
+            #print("\n", product.css('').getall(), "\n")
+            tmp = {}
+            for key in bought_css.keys():
+                tmp[key] = product.css(bought_css[key]).get()
+                if key == "URL":
+                    tmp[key] = "https://www.tesco.com"+tmp[key]
             result.append(tmp)
 
         return result
