@@ -1,23 +1,25 @@
 import scrapy
 import json
 
-from scrapy.selector import Selector
+from spiders.reviews import Review
 
 class Products(scrapy.Spider):
     """docs"""
     name = "products"
     start_urls = [
-        #'https://www.tesco.com/groceries/en-GB/shop/household/kitchen-roll-and-tissues/all?page=1',
-        'https://www.tesco.com/groceries/en-GB/shop/pets/cat-food-and-accessories/all?page=1'
+        'https://www.tesco.com/groceries/en-GB/shop/household/kitchen-roll-and-tissues/all?page=1',
+        #'https://www.tesco.com/groceries/en-GB/shop/pets/cat-food-and-accessories/all?page=1'
     ]
+
+    def __init__(self):
+        self.reviews = []
 
     def parse(self, response):
         if response.status == 404:
-            print(response.request.url)
             return
 
         products = response.xpath('//div[@class="product-details--content"]/h3/a/@href').getall()
-        #print("[PRODUCTS]: ", products)
+
         for url in products:
             yield scrapy.Request(url="https://www.tesco.com"+url, callback=self.split_data)
 
@@ -35,6 +37,7 @@ class Products(scrapy.Spider):
             "image": '//img[@class="product-image"]/@src',
             "prod_title": '//h1[@class="product-details-tile__title"]/text()',
             "price": '//span[@data-auto="price-value"]/text()',
+            "review_amount":'//h2[@class="reviews-list__header"]/text()',
         }
 
         #make list of xpath to combine description blocks
@@ -55,18 +58,18 @@ class Products(scrapy.Spider):
 
         product["URL"] = response.url
         product["ID"] = int(response.url.split("/")[-1])
+        product["review"] = []
 
         for key in single_data.keys():
             product[key] = response.xpath(single_data[key]).get()
+            if key == "review_amount":
+                try:
+                    product[key] = int(product[key].split(" ")[0])//10+1
+                except Exception as e:
+                    product[key] = 0
 
         for key in mul_data.keys():
             product[key] = ' '.join(response.xpath(mul_data[key]).getall())
-
-        try:
-            
-            product["review"] = self.split_review(response)
-        except Exception as e:
-            print("[EXCEPTION]: ", e)
 
         try:
             product["bought_next"] = self.split_bought(response)
@@ -75,25 +78,20 @@ class Products(scrapy.Spider):
 
         yield self.save_data(product)
 
-    def get_review(self, response):
-        #get all pages
+    def get_review_page(self, response):
         pages = 1
         try:
             amount = int(response.xpath('//h2[@class="reviews-list__header"]/text()').get().split(" ")[0])
             if amount>10:
                 pages = amount//10
-                if amount%10!=0:
-                    pages += 1
-                else:
-                    pass
         except Exception as e:
             print("[EXCEPTION]: ", e)
 
-        url = response.request.url+"?active-tab=product-reviews&page={0}#review-data".format(pages)
-        return url
+        for page in range(1, pages):
+            url = response.request.url+"?active-tab=product-reviews&page={0}#review-data".format(page)
+            yield scrapy.Request(url=url, callback=self.split_review)
 
     def split_review(self, response):
-
         review_data = '//article[@class="review"]'
         
         review_css = {
@@ -114,8 +112,7 @@ class Products(scrapy.Spider):
                 if key == "stars":
                     tmp[key] = int(tmp[key][0])
             result.append(tmp)
-
-        return result
+        self.reviews.extend(result)
 
     def split_bought(self, response):
         result = []
