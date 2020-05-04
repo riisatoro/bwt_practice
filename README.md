@@ -4,12 +4,15 @@ Simple web-parser for tesco.com
 * Scrapy 2.1
 
 Run pipenv: 
-$> pipenv shell
+$> pipenv shell  
 
 Then, run spider:
 
-$> sd src
-$> scrapy crawl products
+$> sd src  
+
+$> scrapy crawl products  
+$> scrapy crawl reviews  
+
 
 You can find results in src/parsed/data.json
 

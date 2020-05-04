@@ -1,7 +1,7 @@
 import scrapy 
 import json
 
-
+from . import schema
 
 class Review(scrapy.Spider):
     name = 'reviews'
@@ -12,26 +12,17 @@ class Review(scrapy.Spider):
 
         for product in products:
             for page in range(1, product["review_amount"]):
-                url = product["URL"]+"?active-tab=product-reviews&page={}#review-data".format(page)
+                url = product["URL"]+schema.REVIEW_URL.format(page)
                 yield scrapy.Request(url=url, callback=self.parse)
 
     def parse(self, response):
-        review_data = '//article[@class="review"]'
-        review_css = {
-            "title": 'h3.review__summary::text',
-            "stars": 'span.czgxkL::text',
-            "author": 'span.review-author__nickname::text',
-            "date": 'span.review-author__submission-time::text',
-            "text": 'p.review__text::text'
-        }
-        
         #get all reviews on the page
         result = []
-        reviews = response.xpath(review_data)
+        reviews = response.xpath(schema.REVIEW_DATA)
         for rev in reviews:
             tmp = {}
-            for key in review_css.keys():
-                tmp[key] = rev.css(review_css[key]).get()
+            for key in schema.REVIEW_CSS.keys():
+                tmp[key] = rev.css(schema.REVIEW_CSS[key]).get()
                 if key == "stars":
                     tmp[key] = int(tmp[key][0])
             result.append(tmp)
