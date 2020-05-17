@@ -1,7 +1,15 @@
 import scrapy 
 import json
+import logging
 
 from . import schema
+from scrapy.utils.log import configure_logging
+
+logging.basicConfig(
+    filename="logs/review_log.txt',
+    format='%(levelname)s: %(message)s',
+    level=logging.INFO
+)
 
 class Review(scrapy.Spider):
     name = 'reviews'

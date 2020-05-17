@@ -1,9 +1,16 @@
 import scrapy
 import json
+import logging
 
 from . import schema
+from scrapy.utils.log import configure_logging
 
-from spiders.reviews import Review
+logging.basicConfig(
+    filename='logs/product_log.txt',
+    format='%(levelname)s: %(message)s',
+    level=logging.INFO
+)
+
 
 class Products(scrapy.Spider):
     """docs"""
