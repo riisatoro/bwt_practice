@@ -2,7 +2,7 @@ import scrapy
 import json
 import logging
 
-from . import schema
+import schema
 from scrapy.utils.log import configure_logging
 
 logging.basicConfig(
@@ -38,14 +38,18 @@ class Review(scrapy.Spider):
 
 
     def save_data(self, result, url):
-        ID = int(url.split("?")[0].split("/")[-1])
-        data = None
-        with open('parsed/data.json', 'r') as file:
-            data = json.load(file)
+        try:
+            ID = int(url.split("?")[0].split("/")[-1])
+            data = None
+            with open('parsed/data.json', 'r') as file:
+                data = json.load(file)
 
-        for index in range(len(data["items"])):
-            if data["items"][index]["ID"] == ID:
-                data["items"][index]["review"].extend(result)
+            for index in range(len(data["items"])):
+                if data["items"][index]["ID"] == ID:
+                    data["items"][index]["review"].extend(result)
 
-        with open('parsed/data.json', 'w') as file:
-            json.dump(data, file, indent=4)
+            with open('parsed/data.json', 'w') as file:
+                json.dump(data, file, indent=4)
+        except Exception as e:
+            pass
+            #print("[EXCEPTION]: Save review data: ", e)

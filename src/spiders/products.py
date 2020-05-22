@@ -2,7 +2,7 @@ import scrapy
 import json
 import logging
 
-from . import schema
+import schema
 from scrapy.utils.log import configure_logging
 
 logging.basicConfig(
